@@ -1,0 +1,35 @@
+{
+  "name": "pcat",
+  "version": "1.0.0",
+  "description": "pcat foto app",
+  "main": "app.js ",
+  "type": "commonjs",
+  "scripts": {
+    "start": "nodemon app.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Beyzakttas/PCAT.git"
+  },
+  "keywords": [
+    "fota",
+    "app",
+    "camera"
+  ],
+  "author": "beyza aktas",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Beyzakttas/PCAT/issues"
+  },
+  "homepage": "https://github.com/Beyzakttas/PCAT#readme",
+  "dependencies": {
+    "ejs": "^4.0.1",
+    "express": "^5.2.1",
+    "mongoose": "^9.1.6"
+  },
+  "devDependencies": {
+    "nodeman": "^1.1.2",
+    "nodemon": "^3.1.11"
+  }
+ 
+}
