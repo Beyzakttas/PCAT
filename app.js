@@ -3,9 +3,8 @@ const mongoose = require('mongoose');
 const fileUpload = require('express-fileupload');
 const path = require('path');
 const methodOverride = require('method-override');
-const fs = require('fs');
-const Photo = require('./models/Photo');
-
+const PhotoController=require('./controllers/photoControllers');
+const pageController=require('./controllers/pageController');
 const app = express();
 
 /* ===== DB CONNECTION ===== */
@@ -35,89 +34,21 @@ app.use(methodOverride('_method', {
 /* ===== ROUTES ===== */
 
 // 1. ANA SAYFA: Tüm fotoğrafları listele
-app.get('/', async (req, res) => {
-  const photos = await Photo.find({}).sort('-dateCreated');
-  res.render('index', { photos });
-});
-
+app.get('/',PhotoController.getAllPhotos);
 // 2. FOTOĞRAF DETAY SAYFASI
-app.get('/photos/:id', async (req, res) => {
-  try {
-    const photo = await Photo.findById(req.params.id);
-    if (!photo) return res.status(404).send("Fotoğraf bulunamadı.");
-    res.render('photo', { photo });
-  } catch (error) {
-    res.status(500).send("Sunucu hatası.");
-  }
-});
-
+app.get('/photos/:id', PhotoController.getPhoto);
 // 3. STATİK SAYFALAR
-app.get('/about', (req, res) => res.render('about'));
-app.get('/add', (req, res) => res.render('add'));
-
-/* ===== CRUD İŞLEMLERİ ===== */
-
-// 4. OLUŞTURMA: Yeni fotoğraf ekle ve uploads klasörüne kaydet
-app.post('/photos', async (req, res) => {
-  const uploadDir = 'public/uploads';
-
-  // public/uploads klasörü yoksa oluştur
-  if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-  }
-
-  if (!req.files || Object.keys(req.files).length === 0) {
-    return res.status(400).send('Hiç dosya seçilmedi.');
-  }
-
-  let uploadedImage = req.files.image;
-  let uploadPath = path.join(__dirname, uploadDir, uploadedImage.name);
-
-  uploadedImage.mv(uploadPath, async () => {
-    await Photo.create({
-      ...req.body,
-      image: '/uploads/' + uploadedImage.name
-    });
-    res.redirect('/');
-  });
-});
-
+app.get('/about',pageController.getAboutPage );
+app.get('/add',pageController.getAddPage );
 // 5. GÜNCELLEME SAYFASI: Edit formunu getir
-app.get('/photos/edit/:id', async (req, res) => {
-  const photo = await Photo.findById(req.params.id);
-  res.render('edit', { photo });
-});
-
+app.get('/photos/edit/:id',pageController.geteditPage );
+/* ===== CRUD İŞLEMLERİ ===== */
+// 4. OLUŞTURMA: Yeni fotoğraf ekle ve uploads klasörüne kaydet
+app.post('/photos',PhotoController.createPhoto);
 // 6. GÜNCELLEME: Verileri güncelle (Sadece başlık ve açıklama)
-app.put('/photos/:id', async (req, res) => {
-  const photo = await Photo.findById(req.params.id);
-  photo.title = req.body.title;
-  photo.description = req.body.description;
-  await photo.save();
-  res.redirect(`/photos/${req.params.id}`);
-});
-
+app.put('/photos/:id',PhotoController.updatePhoto);
 // 7. SİLME: Hem veritabanından hem de uploads klasöründen siler
-app.delete('/photos/:id', async (req, res) => {
-  try {
-    const photo = await Photo.findOne({ _id: req.params.id });
-    
-    // Dosya yolunu oluştur (public + /uploads/resim.jpg)
-    let imagePath = __dirname + '/public' + photo.image;
-
-    // Klasörde dosya var mı diye kontrol et ve sil
-    if (fs.existsSync(imagePath)) {
-      fs.unlinkSync(imagePath);
-    }
-
-    // Veritabanı kaydını sil
-    await Photo.findByIdAndDelete(req.params.id);
-    res.redirect('/');
-  } catch (err) {
-    res.status(500).send("Silme işlemi sırasında hata oluştu.");
-  }
-});
-
+app.delete('/photos/:id',PhotoController.deletePhoto);
 /* ===== SERVER START ===== */
 const port = 3000;
 app.listen(port, () => {
